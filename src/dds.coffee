@@ -50,9 +50,10 @@ PolicyId =
   ContentFilter:      3
   TimeFilter:         4
   Durability:         5
-  TransportPriority:  6
-  Ownership:          7
-  OwnershipStrenght:  8
+  DestinationOrder:   6
+  TransportPriority:  7
+  Ownership:          8
+  OwnershipStrength:  9
 
 
 ###
@@ -179,6 +180,30 @@ Durability =
     id: PolicyId.Durability
     k: DurabilityKind.Persistent
 
+###
+    Destination Order Policy
+###
+DestinationOrderKind =
+  ByReceptionTimestamp: 0
+  BySourceTimestamp: 1
+
+
+###*
+   DestinationOrder QoS Policy.
+   @memberof dds#
+    @property ByReceptionTimestamp - data is ordered based on the reception time at each Subscriber
+    @property BySourceTimestamp - data is ordered based on a time stamp placed at the source (by the Service or by the application)
+    @example var qos = DestinationOrder.ByReceptionTimestamp
+###
+DestinationOrder =
+  ByReceptionTimestamp:
+    id: PolicyId.DestinationOrder
+    k: DestinationOrderKind.ByReceptionTimestamp
+  BySourceTimestamp:
+    id: PolicyId.DestinationOrder
+    k: DestinationOrderKind.BySourceTimestamp
+
+
 ###*
   Creates any of the DDS entities quality of service, including DataReaderQos and DataWriterQos.
   @constructor
@@ -214,6 +239,8 @@ dds.DurabilityKind = DurabilityKind
 dds.Durability = Durability
 dds.TimeFilter = TimeFilter
 dds.ContentFilter = ContentFilter
+dds.DestinationOrderKind = DestinationOrderKind
+dds.DestinationOrder = DestinationOrder
 
 ###*
   Topic quality of service object
@@ -246,6 +273,28 @@ dds.DataWriterQos = EntityQos
 ##   DDS Entities
 ########################################################################################################################
 
+###*
+    SampleInfo is accessed in data samples via the `$info` property and provides instance lifecycle information
+    @memberof dds#
+     @property {Enum} SampleState - A value of `1` is Read, a value of `2` is NotRead
+     @property {Enum} ViewState - A value of `1` is New, a value of `2` is NotNew
+     @property {Enum} InstanceState - A value of `1` is Alive, a value of `2` is NotAliveDisposed, a value of `4`
+     is NotAliveNoWriters
+###
+
+SampleInfo =
+  SampleState:
+    Read: 1
+    NotRead: 2
+  ViewState:
+    New: 1
+    NotNew: 2
+  InstanceState:
+    Alive: 1
+    NotAliveDisposed: 2
+    NotAliveNoWriters: 4
+
+dds.SampleInfo = SampleInfo
 
 JSONTopicTypeName = "org.omg.dds.types.JSONTopicType"
 
@@ -264,12 +313,27 @@ isBuiltinTopicType = (t) -> isJSONTopicType(t) or isKeyValueTopicType(t)
 JSONTopicTypeSupport =
   id: 0
   injectType: (s) ->
-    v = new JSONTopicType(JSON.stringify(s))
+    v = new JSONTopicType(JSON.stringify(s, (key, value) ->
+      if (value != value)
+        'NaN'
+      value
+    ))
     console.log("InjectedType = #{JSON.stringify(v)}")
     v
 
   extractType: (s) ->
-    v = JSON.parse(s.value)
+    m = s.value
+    try
+      v = JSON.parse(s.value)
+    catch e
+      m = m(replace(/([:,]|:\[)NaN/g, (matched) ->
+       matched.replace('NaN', '"NaN"')
+      ))
+      v = JSON.parse(m, (key, value) ->
+        if (value == 'NaN')
+          NaN
+        value
+      )
     console.log("Extracted Type = #{v}")
     v
 

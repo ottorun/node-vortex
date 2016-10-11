@@ -1,9 +1,14 @@
 {
-  "name": "node-vortex",
+  "name": "node-vortex-fork",
   "description": "A library for PrismTech Vortex",
-  "version": "0.2.0",
+  "version": "0.0.1",
   "contributors": [
-    "Toby McClean <toby.mcclean@prismtech.com>"
+    {
+      "name": "Toby McClean <toby.mcclean@prismtech.com>"
+    },
+    {
+      "name": "Ottorun"
+    }
   ],
   "tags": [
     "dds",
