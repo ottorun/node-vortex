@@ -37,7 +37,7 @@ Defines the core Vortex-Web-Client javascript library. It includes the JavaScrip
 #    exports = module.exports = dds
 #  exports.dds = dds
 
-dds.VERSION = "__project.version__"
+dds.VERSION = "1.2.4"
 
 ########################################################################################################################
 ##   QoS Policies and Entities QoS
