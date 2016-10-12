@@ -6,9 +6,9 @@ A Node.js module for PrismTech Vortex
 This fork is intended to update node-vortex library and follow the evolution of Vortex Web Server.
 Update will be pushed into Primstech node-vortex repository with pull requests.
 
-[![npm version](https://badge.fury.io/js/pix-diff2.svg)](http://badge.fury.io/js/node-vortex-fork)
+[![npm version](https://badge.fury.io/js/node-vortex-fork.svg)](http://badge.fury.io/js/node-vortex-fork)
 
-[![NPM](https://nodei.co/npm/pix-diff2.png)](https://nodei.co/npm/node-vortex-fork/)
+[![NPM](https://nodei.co/npm/node-vortex-fork.png)](https://nodei.co/npm/node-vortex-fork/)
 
 ## Compiling Coffee Script files
 The source of the module is written in CoffeeScript, to compile them to JavaScript:
