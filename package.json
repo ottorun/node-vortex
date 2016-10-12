@@ -1,7 +1,7 @@
 {
   "name": "node-vortex-fork",
   "description": "A library for PrismTech Vortex",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "contributors": [
     {
       "name": "Toby McClean <toby.mcclean@prismtech.com>"
