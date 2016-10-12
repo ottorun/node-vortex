@@ -181,7 +181,7 @@ Durability =
     k: DurabilityKind.Persistent
 
 ###
-    Destination Order Policy
+  Destination Order Policy
 ###
 DestinationOrderKind =
   ByReceptionTimestamp: 0
@@ -189,8 +189,8 @@ DestinationOrderKind =
 
 
 ###*
-   DestinationOrder QoS Policy.
-   @memberof dds#
+  DestinationOrder QoS Policy.
+  @memberof dds#
     @property ByReceptionTimestamp - data is ordered based on the reception time at each Subscriber
     @property BySourceTimestamp - data is ordered based on a time stamp placed at the source (by the Service or by the application)
     @example var qos = DestinationOrder.ByReceptionTimestamp
@@ -274,12 +274,12 @@ dds.DataWriterQos = EntityQos
 ########################################################################################################################
 
 ###*
-    SampleInfo is accessed in data samples via the `$info` property and provides instance lifecycle information
-    @memberof dds#
-     @property {Enum} SampleState - A value of `1` is Read, a value of `2` is NotRead
-     @property {Enum} ViewState - A value of `1` is New, a value of `2` is NotNew
-     @property {Enum} InstanceState - A value of `1` is Alive, a value of `2` is NotAliveDisposed, a value of `4`
-     is NotAliveNoWriters
+  SampleInfo is accessed in data samples via the `$info` property and provides instance lifecycle information
+  @memberof dds#
+   @property {Enum} SampleState - A value of `1` is Read, a value of `2` is NotRead
+   @property {Enum} ViewState - A value of `1` is New, a value of `2` is NotNew
+   @property {Enum} InstanceState - A value of `1` is Alive, a value of `2` is NotAliveDisposed, a value of `4`
+   is NotAliveNoWriters
 ###
 
 SampleInfo =
@@ -315,7 +315,7 @@ JSONTopicTypeSupport =
   injectType: (s) ->
     v = new JSONTopicType(JSON.stringify(s, (key, value) ->
       if (value != value)
-        'NaN'
+        return 'NaN'
       value
     ))
     console.log("InjectedType = #{JSON.stringify(v)}")
@@ -324,14 +324,14 @@ JSONTopicTypeSupport =
   extractType: (s) ->
     m = s.value
     try
-      v = JSON.parse(s.value)
-    catch e
+      v = JSON.parse(m)
+    catch error
       m = m(replace(/([:,]|:\[)NaN/g, (matched) ->
        matched.replace('NaN', '"NaN"')
       ))
       v = JSON.parse(m, (key, value) ->
         if (value == 'NaN')
-          NaN
+          return NaN
         value
       )
     console.log("Extracted Type = #{v}")
@@ -349,21 +349,19 @@ typesSupport = [JSONTopicTypeSupport,  UserDefinedTopicTypeSupport]
 class TopicInfo
   constructor: (@did, @tname, @qos, @ttype, @tregtype) ->
 
+###*
+  Creates a `Topic` in the domain `did`, named `tname`, having `qos` Qos,
+  for the type `ttype` whose registered name is `tregtype`
+  @constructor
+    @param {number} did - DDS domain ID
+    @param {string} tname - topic name
+    @param {TopicQos} qos - topic Qos
+    @param {string} ttype - topic type. If not specified, a generic type is used.
+    @param {string} tregtype - topic registered type name. If not specified, 'ttype' is used.
 
-
-    ###*
-      Creates a `Topic` in the domain `did`, named `tname`, having `qos` Qos,
-      for the type `ttype` whose registered name is `tregtype`
-      @constructor
-        @param {number} did - DDS domain ID
-        @param {string} tname - topic name
-        @param {TopicQos} qos - topic Qos
-        @param {string} ttype - topic type. If not specified, a generic type is used.
-        @param {string} tregtype - topic registered type name. If not specified, 'ttype' is used.
-
-      @classdesc defines a DDS Topic
-      @memberof dds
-    ###
+  @classdesc defines a DDS Topic
+  @memberof dds
+###
 class Topic
   constructor: (did, tname, qos, ttype, tregtype) ->
     if (arguments.length < 2)
@@ -456,7 +454,18 @@ class DataReader
 
   onDataAvailable: (m) =>
     @receivedSamples += 1
-    d = @typeSupport.extractType(JSON.parse(m))
+    try
+      parsedm = JSON.parse(m);
+    catch error
+      m = m.replace(/([:,]|:\[)NaN/g, (matched) ->
+        matched.replace('NaN', '"NaN"')
+      )
+      parsedm = JSON.parse(m, (key, value) ->
+        if (value == 'NaN')
+          return NaN
+        value
+      )
+    d = @typeSupport.extractType(parsedm);
     @handlers.forEach((h) -> h(d))
 
   ###*
@@ -480,10 +489,10 @@ class DataReader
 
    @classdesc defines a DDS data writer. This type
    is used to write data for a specific topic with a given QoS.
-   A `DataWriter` goes through different states, it is intially disconnected and changes to the connected
+   A `DataWriter` goes through different states, it is initially disconnected and changes to the connected
    state when the underlying transport connection is successfully established with the server.
-   At this point a `DataWriter` can be explicitely closed or disconnected. A disconnection can happen
-   as the result of a network failure or server failure. Disconnection and reconnections are managed by the
+   At this point a `DataWriter` can be explicitly closed or disconnected. A disconnection can happen
+   as the result of a network failure or server failure. Disconnections and reconnections are managed by the
    runtime.
    @memberof dds
 ###
@@ -501,7 +510,9 @@ class DataWriter
 
   ###*
     Writes one or more samples.
-    @param {...data-type} ds - data sample
+    The returned samples contained the SampleInfo
+    accessible from the `info` property
+    @param {...data-type} ds - data samples
     @memberof! dds.DataWriter#
     @function write
   ###
@@ -510,6 +521,17 @@ class DataWriter
     @runtime.writeData(this, xs)
     @sentSamples += xs.length
 
+  ###*
+    Dispose one or more instances.
+    @param {...data-type} ds - data samples, each containing
+    the key of the instance to be disposed
+    @memberof! dds.DataWriter#
+    @function dispose
+  ###
+  dispose: (ds...) =>
+    xs = ds.map((s) => @typeSupport.injectType(s))
+    @runtime.disposeData(this, xs);
+    @sentSamples += xs.length
 
   resetStats: () ->
     @sentSamples = 0
